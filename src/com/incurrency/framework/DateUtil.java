@@ -2,6 +2,10 @@ package com.incurrency.framework;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -192,6 +196,8 @@ public class DateUtil {
 
     public static Date getFormattedDate(String date, String format, String timeZone) {
         SimpleDateFormat sdf = new SimpleDateFormat(format);
+        sdf.setTimeZone(TimeZone.getTimeZone(timeZone));
+        
         Calendar c = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
         Date d = new Date(0);
         try {
@@ -207,8 +213,9 @@ public class DateUtil {
     public static String getFormatedDate(String format, long timeMS, TimeZone tmz) {
         SimpleDateFormat sdf = new SimpleDateFormat(format);
         sdf.setTimeZone(tmz);
-        String date = sdf.format(new Date(timeMS));
-        return date;
+        Date date=new Date(timeMS);
+        String dateString = sdf.format(date);
+        return dateString;
     }
 
     //parse the date string in the given format and timezone to return a date object

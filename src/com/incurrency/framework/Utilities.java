@@ -83,6 +83,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.internet.InternetAddress;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.jquantlib.time.Period;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ScanResult;
 
@@ -3488,32 +3489,36 @@ public class Utilities {
         return cal.getTime();
     }
 
-    public static String getLastThursday(String dateString, String format, int lookForward) {
+    public static String getLastThursday(String dateString, String format, int lookForward, String timeZone) {
         //datestring is in yyyyMMdd
+        // get eod of month
+        // update eom calendar
+        // convert EOM to Thursday
+        // return EOM
         org.jquantlib.time.Date date = formatStringToJdate(dateString, format);
+        Date javaDate=DateUtil.getFormattedDate(dateString,format, timeZone);
         Calendar cal = Calendar.getInstance();
-        cal.setTime(date.longDate());
+        cal.setTimeZone(TimeZone.getTimeZone(timeZone));
+        cal.setTime(javaDate);
         cal.add(Calendar.MONTH, lookForward);
         org.jquantlib.time.Date lastWorkDay = org.jquantlib.time.Date.endOfMonth(new org.jquantlib.time.Date(cal.getTime()));
-        cal.setTime(lastWorkDay.longDate());
-        int adjust = cal.get(Calendar.DAY_OF_WEEK) - 5;
-        org.jquantlib.time.Date lastThursday;
-        if (adjust > 0) {
-            lastThursday = lastWorkDay.sub(adjust);
-        } else if (adjust == 0) {
-            lastThursday = lastWorkDay;
-        } else {
-            lastThursday = lastWorkDay.sub(7 + adjust);
-        }
-        lastThursday = Algorithm.ind.adjust(lastThursday, BusinessDayConvention.Preceding);
-        Date javaThursday = lastThursday.isoDate();
-        if (javaThursday.before(date.longDate())) {
-            return (getLastThursday(dateString, format, 1));
-        }
-        return DateUtil.getFormatedDate("yyyyMMdd", javaThursday.getTime(), TimeZone.getTimeZone(Algorithm.timeZone));
-
+        return getLastWeekday(lastWorkDay.isoDate(),Calendar.THURSDAY,Algorithm.timeZone);
+        
     }
 
+    public static String getLastWeekday(Date lastDayOfMonth,int dayOfWeek,String timeZone){
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getTimeZone(timeZone));
+        cal.setTime(lastDayOfMonth);
+        int adjustment=cal.get(Calendar.DAY_OF_WEEK)-dayOfWeek;
+        org.jquantlib.time.Date jDate=new org.jquantlib.time.Date(cal.getTime());
+        if(adjustment>0){            
+            jDate=Algorithm.ind.advance(jDate,-adjustment, TimeUnit.Days,BusinessDayConvention.Preceding, false);
+        }
+        Date adjustedDate=jDate.isoDate();
+        return DateUtil.getFormatedDate("yyyyMMdd", adjustedDate.getTime(), TimeZone.getTimeZone(Algorithm.timeZone));
+    }
+    
     public static org.jquantlib.time.Date formatStringToJdate(String dateString, String format) {
         Date input = DateUtil.getFormattedDate(dateString, format, Algorithm.timeZone);
         return new org.jquantlib.time.Date(input);
