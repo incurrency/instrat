@@ -3511,10 +3511,12 @@ public class Utilities {
         cal.setTimeZone(TimeZone.getTimeZone(timeZone));
         cal.setTime(lastDayOfMonth);
         int adjustment=cal.get(Calendar.DAY_OF_WEEK)-dayOfWeek;
-        org.jquantlib.time.Date jDate=new org.jquantlib.time.Date(cal.getTime());
-        if(adjustment>0){            
-            jDate=Algorithm.ind.advance(jDate,-adjustment, TimeUnit.Days,BusinessDayConvention.Preceding, false);
+        if(adjustment<0){
+            adjustment=7+adjustment;
         }
+        org.jquantlib.time.Date jDate=new org.jquantlib.time.Date(cal.getTime());
+        jDate= jDate.add(-adjustment);
+        jDate=Algorithm.ind.advance(jDate,0, TimeUnit.Days,BusinessDayConvention.Preceding, false);
         Date adjustedDate=jDate.isoDate();
         return DateUtil.getFormatedDate("yyyyMMdd", adjustedDate.getTime(), TimeZone.getTimeZone(Algorithm.timeZone));
     }
